@@ -113,7 +113,13 @@ fn main() -> Result<(), std::io::Error> {
 
 fn load_config(config_dir: &std::path::PathBuf) -> Result<Config, std::io::Error> {
     let config_path = config_dir.join("config.toml");
-    let config: Config = match std::fs::metadata(&config_path).unwrap().is_file() {
+
+    let meta_data = match std::fs::metadata(&config_path) {
+        Ok(md) => md,
+        Err(_e) => return Ok(Config { totp: std::collections::HashMap::new() })
+    };
+
+    let config: Config = match meta_data.is_file() {
         true => {
             let config = std::fs::read_to_string(config_path)?;
 

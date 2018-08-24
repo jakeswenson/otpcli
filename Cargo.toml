@@ -1,6 +1,6 @@
 [package]
 name = "otpcli"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Jake Swenson <jake@jakeswenson.com>"]
 description = "A simple TOTP cli"
 license = "MIT"
