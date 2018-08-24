@@ -2,6 +2,10 @@
 name = "otpcli"
 version = "0.1.0"
 authors = ["Jake Swenson <jake@jakeswenson.com>"]
+description = "A simple TOTP cli"
+license = "MIT"
+license-file = "LICENSE"
+
 
 [dependencies]
 ring = "0.13.2"
