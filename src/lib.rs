@@ -1,10 +1,15 @@
 extern crate base32;
+extern crate byteorder;
+extern crate dirs;
+extern crate ring;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate toml;
-extern crate ring;
-extern crate byteorder;
+
+pub use ring::digest::{Algorithm, SHA1, SHA256, SHA512};
+use std::io;
+use std::time::{Duration, SystemTime};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
@@ -16,15 +21,19 @@ pub struct TotpOptions {
     secret: String,
 }
 
-fn make_config_dir(config_dir: &std::path::PathBuf) -> std::io::Result<()> {
+fn make_config_dir(config_dir: &std::path::PathBuf) -> io::Result<()> {
     println!("creating config dir: {:?}", config_dir);
     std::fs::create_dir_all(config_dir)
 }
 
-pub fn add_secret(mut config: Config, config_dir: std::path::PathBuf, name: String, secret: String) -> Result<(), std::io::Error> {
+pub fn default_config_dir() -> std::path::PathBuf {
+    let home_dir = dirs::home_dir().expect("Can't load users home directory");
+    home_dir.join(".config").join("otpcli")
+}
 
+pub fn add_secret(mut config: Config, config_dir: std::path::PathBuf, name: String, secret: String) -> io::Result<()> {
     match std::fs::metadata(&config_dir) {
-        Err(_)  => make_config_dir(&config_dir)?,
+        Err(_) => make_config_dir(&config_dir)?,
         Ok(ref md) if !md.is_dir() => make_config_dir(&config_dir)?,
         Ok(_) => ()
     }
@@ -37,7 +46,7 @@ pub fn add_secret(mut config: Config, config_dir: std::path::PathBuf, name: Stri
     std::fs::write(config_dir.join("config.toml"), string)
 }
 
-pub fn load_config(config_dir: &std::path::PathBuf) -> Result<Config, std::io::Error> {
+pub fn load_config(config_dir: &std::path::PathBuf) -> io::Result<Config> {
     let config_path = config_dir.join("config.toml");
 
     let meta_data = match std::fs::metadata(&config_path) {
@@ -56,30 +65,32 @@ pub fn load_config(config_dir: &std::path::PathBuf) -> Result<Config, std::io::E
     Ok(config)
 }
 
-use std::time::{Duration, SystemTime};
+static ALPHABET: base32::Alphabet = base32::Alphabet::RFC4648 { padding: false };
 
-pub fn generate_totp(config: Config, name: String) -> String {
-    let totp_settings = config.totp.get(&name)
-        .expect(&format!("a TOTP config named `{}` was not found, did you add a secret with that name?", name));
+pub fn standard_totp(config: Config, name: &str) -> Option<String> {
+    let totp_settings = config.totp.get(name)?;
 
-    let time = SystemTime::now();
-    let seconds: Duration = time.duration_since(SystemTime::UNIX_EPOCH)
-        .expect("Can't get time since EPOCH?");
+    let now = SystemTime::now();
+    let seconds: Duration = now.duration_since(SystemTime::UNIX_EPOCH).expect("Can't get time since UNIX_EPOCH?");
 
-    let secret = base32::decode(base32::Alphabet::RFC4648 { padding: false }, &totp_settings.secret);
-    let secret = secret.expect("Invalid base32 secret");
+    let secret = base32::decode(ALPHABET, &totp_settings.secret).expect("Invalid base32 secret");
 
-    totp(&secret, seconds, Duration::from_secs(30), 6)
+    Some(totp(&secret, seconds, Duration::from_secs(30), 6, &SHA1))
 }
 
-pub fn totp(secret: &[u8], time: Duration, time_window: Duration, length: usize) -> String {
+pub fn totp(
+    secret: &[u8],
+    time_since_epoch: Duration,
+    time_window: Duration,
+    length: usize,
+    algo: &'static Algorithm) -> String {
     use ring::hmac::{sign, SigningKey};
     use byteorder::{ByteOrder, BigEndian};
 
     let mut buf: [u8; 8] = [0; 8];
-    BigEndian::write_u64(&mut buf, time.as_secs() / time_window.as_secs());
+    BigEndian::write_u64(&mut buf, time_since_epoch.as_secs() / time_window.as_secs());
 
-    let signing_key = SigningKey::new(&ring::digest::SHA1, secret);
+    let signing_key = SigningKey::new(algo, secret);
 
     let signature = sign(&signing_key, &buf);
 
@@ -134,12 +145,12 @@ fn verify() {
 
     // test vectors from the RFC
     // https://tools.ietf.org/html/rfc6238#appendix-B
-    let code = totp(b"12345678901234567890", Duration::from_secs(59), standard_time_window, 8);
+    let code = totp(b"12345678901234567890", Duration::from_secs(59), standard_time_window, 8, &SHA1);
     assert_eq!(code, "94287082");
 
-    let code = totp(b"12345678901234567890", Duration::from_secs(1111111109), standard_time_window, 8);
+    let code = totp(b"12345678901234567890", Duration::from_secs(1111111109), standard_time_window, 8, &SHA1);
     assert_eq!(code, "07081804");
 
-    let code = totp(b"12345678901234567890", Duration::from_secs(1234567890), standard_time_window, 8);
+    let code = totp(b"12345678901234567890", Duration::from_secs(1234567890), standard_time_window, 8, &SHA1);
     assert_eq!(code, "89005924");
 }

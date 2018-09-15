@@ -1,20 +1,16 @@
-extern crate base32;
+extern crate otpcli;
 #[macro_use]
 extern crate structopt;
 
 use std::io::prelude::*;
 use structopt::StructOpt;
 
-extern crate otpcli;
-
 mod cli;
 
 fn main() -> Result<(), std::io::Error> {
     let opts = cli::Options::from_args();
 
-    let home_dir = std::env::home_dir().expect("Can't load users home directory");
-    let config_dir = home_dir.join(".config").join("otpcli");
-
+    let config_dir = otpcli::default_config_dir();
     let config = otpcli::load_config(&config_dir)?;
 
     match opts.cmd {
@@ -29,7 +25,10 @@ fn main() -> Result<(), std::io::Error> {
                 return Ok(());
             }
 
-            let code = otpcli::generate_totp(config, name.unwrap());
+            let name = name.unwrap();
+
+            let code = otpcli::standard_totp(config, &name)
+                .expect(&format!("a TOTP config named `{}` was not found, did you add a secret with that name?", name));
 
             if opts.end_with_newline {
                 println!("{}", code);
