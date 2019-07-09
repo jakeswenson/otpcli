@@ -4,7 +4,10 @@ use std::io::prelude::*;
 use structopt::StructOpt;
 
 use cli::{Command, Options};
-use otp::{self, config::{self, Config}};
+use otp::{
+    self,
+    config::{self, Config},
+};
 
 mod cli;
 
@@ -23,7 +26,13 @@ fn main() -> Result<(), Box<dyn Error>> {
             let token = stoken::read_file(path);
             let token = stoken::RSAToken::from_xml(token, &pin);
             let exported_token = stoken::export::export(token).expect("Unable to export RSA Token");
-            otp::add_secret(config, config_dir, name, exported_token, otp::TokenAlgorithm::SToken)?;
+            otp::add_secret(
+                config,
+                config_dir,
+                name,
+                exported_token,
+                otp::TokenAlgorithm::SToken,
+            )?;
             Ok(())
         }
         Some(Command::ListSecrets { prefix }) => {
@@ -37,7 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             otp::delete_secret(config, config_dir, name)?;
             Ok(())
         }
-        None => generate_token(opts, config)
+        None => generate_token(opts, config),
     }
 }
 
@@ -54,7 +63,10 @@ fn generate_token(opts: Options, config: Config) -> Result<(), Box<dyn Error>> {
     let code = match otp::token(config, &name) {
         Some(token) => token,
         None => {
-            println!("a TOTP config named `{}` was not found, did you add a secret with that name?", name);
+            println!(
+                "a TOTP config named `{}` was not found, did you add a secret with that name?",
+                name
+            );
             Options::clap().print_help()?;
             return Ok(());
         }

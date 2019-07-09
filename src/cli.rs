@@ -25,10 +25,7 @@ pub enum Command {
     /// Add/Update a new TOTP secret
     #[structopt(name = "add")]
     #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
-    AddSecret {
-        name: String,
-        secret: String,
-    },
+    AddSecret { name: String, secret: String },
     /// Import an RSAToken into otpcli
     #[structopt(name = "import")]
     #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
@@ -36,18 +33,14 @@ pub enum Command {
         name: String,
         #[structopt(parse(from_os_str))]
         path: PathBuf,
-        pin: String
+        pin: String,
     },
     /// Add/Update a new TOTP secret
     #[structopt(name = "list")]
     #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
-    ListSecrets {
-        prefix: Option<String>,
-    },
+    ListSecrets { prefix: Option<String> },
     /// Add/Update a new TOTP secret
     #[structopt(name = "delete")]
     #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
-    DeleteSecret {
-        name: String,
-    },
+    DeleteSecret { name: String },
 }

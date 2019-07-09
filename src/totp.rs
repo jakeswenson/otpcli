@@ -11,22 +11,30 @@ pub fn standard_totp(config: Config, name: &str) -> Option<String> {
     let totp_settings = config.totp.get(name)?;
 
     let now = SystemTime::now();
-    let seconds: Duration = now.duration_since(SystemTime::UNIX_EPOCH).expect("Can't get time since UNIX_EPOCH?");
+    let seconds: Duration = now
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .expect("Can't get time since UNIX_EPOCH?");
 
     let secret = base32::decode(ALPHABET, &totp_settings.secret).expect("Invalid base32 secret");
 
-    Some(totp(&secret, seconds, Duration::from_secs(30), 6, Sha1::new()))
+    Some(totp(
+        &secret,
+        seconds,
+        Duration::from_secs(30),
+        6,
+        Sha1::new(),
+    ))
 }
 
 const DIGITS_MODULUS: [u32; 9] = [
-    1u32, // 0
-    10u32, // 1
-    100u32, // 2
-    1000u32, // 3
-    10_000u32, // 4
-    100_000u32, // 5
-    1_000_000u32, // 6
-    10_000_000u32, // 7
+    1u32,           // 0
+    10u32,          // 1
+    100u32,         // 2
+    1000u32,        // 3
+    10_000u32,      // 4
+    100_000u32,     // 5
+    1_000_000u32,   // 6
+    10_000_000u32,  // 7
     100_000_000u32, // 8
 ];
 
@@ -35,9 +43,10 @@ pub fn totp<D: Digest>(
     time_since_epoch: Duration,
     time_window: Duration,
     length: usize,
-    algo: D) -> String {
+    algo: D,
+) -> String {
+    use byteorder::{BigEndian, ByteOrder};
     use crypto::{hmac::Hmac, mac::Mac};
-    use byteorder::{ByteOrder, BigEndian};
 
     let mut buf: [u8; 8] = [0; 8];
     BigEndian::write_u64(&mut buf, time_since_epoch.as_secs() / time_window.as_secs());
@@ -82,12 +91,30 @@ fn verify() {
 
     // test vectors from the RFC
     // https://tools.ietf.org/html/rfc6238#appendix-B
-    let code = totp(b"12345678901234567890", Duration::from_secs(59), standard_time_window, 8, Sha1::new());
+    let code = totp(
+        b"12345678901234567890",
+        Duration::from_secs(59),
+        standard_time_window,
+        8,
+        Sha1::new(),
+    );
     assert_eq!(code, "94287082");
 
-    let code = totp(b"12345678901234567890", Duration::from_secs(1_111_111_109), standard_time_window, 8, Sha1::new());
+    let code = totp(
+        b"12345678901234567890",
+        Duration::from_secs(1_111_111_109),
+        standard_time_window,
+        8,
+        Sha1::new(),
+    );
     assert_eq!(code, "07081804");
 
-    let code = totp(b"12345678901234567890", Duration::from_secs(1_234_567_890), standard_time_window, 8, Sha1::new());
+    let code = totp(
+        b"12345678901234567890",
+        Duration::from_secs(1_234_567_890),
+        standard_time_window,
+        8,
+        Sha1::new(),
+    );
     assert_eq!(code, "89005924");
 }
