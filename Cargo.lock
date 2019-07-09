@@ -243,7 +243,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "otpcli"
-version = "0.4.1-beta.2"
+version = "0.4.1-beta.3"
 dependencies = [
  "base32 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)",

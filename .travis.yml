@@ -7,3 +7,4 @@ script:
   - cargo clippy --all-targets
   - cargo build
   - cargo test
+cache: cargo
