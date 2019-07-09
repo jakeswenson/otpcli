@@ -7,14 +7,14 @@ license-file = "LICENSE"
 edition = "2018"
 
 [dependencies]
-rust-crypto = "0.2.36"
-byteorder = "1.2.4"
-base32 = "0.3.1"
-toml = "0.4.6"
-serde = { version = "1.0", features = ["derive"] }
-structopt = "0.2.10"
-dirs = "1.0.3"
-stoken = "0.0.5"
+rust-crypto = "^0"
+byteorder = "^1.2"
+base32 = "^0"
+toml = "^0"
+serde = { version = "^1.0", features = ["derive"] }
+structopt = "^0"
+dirs = "^1.0"
+stoken = "^0"
 
 [lib]
 name = "otp"
