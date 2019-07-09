@@ -3,8 +3,12 @@ name = "otpcli"
 version = "0.4.1-beta.3"
 authors = ["Jake Swenson <jake@jakeswenson.com>"]
 description = "A simple one-time-password CLI, with support for TOTP and STOKEN."
-license-file = "LICENSE"
+license = "MIT"
 edition = "2018"
+repository = "jakeswenson/otpcli"
+
+[badges]
+travis-ci = {repository="jakeswenson/otpcli", branch="master"}
 
 [dependencies]
 rust-crypto = "^0"
