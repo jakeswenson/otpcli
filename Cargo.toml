@@ -1,11 +1,11 @@
 [package]
 name = "otpcli"
-version = "0.4.1-beta.4"
+version = "0.4.1-beta.5"
 authors = ["Jake Swenson <jake@jakeswenson.com>"]
 description = "A simple one-time-password CLI, with support for TOTP and STOKEN."
 license = "MIT"
 edition = "2018"
-repository = "jakeswenson/otpcli"
+repository = "https://github.com/jakeswenson/otpcli/"
 
 [badges]
 travis-ci = {repository="jakeswenson/otpcli", branch="master"}
