@@ -29,14 +29,12 @@ pub fn load_config(config_dir: &std::path::PathBuf) -> io::Result<Config> {
         Err(_e) => return Ok(Config { totp: HashMap::new() })
     };
 
-    let config: Config = match meta_data.is_file() {
-        true => {
+    let config: Config = if meta_data.is_file() {
             let config = std::fs::read_to_string(config_path)?;
-
             toml::from_str(&config).expect("Unable to read config as TOML")
         }
-        false => Config { totp: std::collections::HashMap::new() }
-    };
+        else { Config { totp: std::collections::HashMap::new() } };
+
     Ok(config)
 }
 
@@ -51,9 +49,9 @@ pub fn default_config_dir() -> std::path::PathBuf {
 }
 
 pub fn ensure_config_dir(config_dir: &PathBuf) -> io::Result<()> {
-    return match std::fs::metadata(config_dir) {
+    match std::fs::metadata(config_dir) {
         Err(_) => make_config_dir(config_dir),
         Ok(ref md) if !md.is_dir() => make_config_dir(config_dir),
         Ok(_) => Ok(())
-    };
+    }
 }

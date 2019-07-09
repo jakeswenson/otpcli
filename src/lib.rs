@@ -21,7 +21,7 @@ impl Copy for TokenAlgorithm {}
 fn stoken(config: &Config, name: &str) -> Option<String> {
     let value = config.lookup(name)?;
     let token = stoken::export::import(value.secret.clone())?;
-    return Some(stoken::generate(token, Utc::now()));
+    Some(stoken::generate(token, Utc::now()))
 }
 
 pub fn token(config: Config, name: &str) -> Option<String> {
@@ -35,7 +35,7 @@ pub fn add_totp_secret(config: Config, config_dir: std::path::PathBuf, name: Str
     base32::decode(base32::Alphabet::RFC4648 { padding: false }, &secret)
         .expect("Invalid base32 OTP secret");
 
-    return add_secret(config, config_dir, name, secret, TokenAlgorithm::TotpSha1);
+    add_secret(config, config_dir, name, secret, TokenAlgorithm::TotpSha1)
 }
 
 pub fn add_secret(
@@ -54,7 +54,7 @@ pub fn add_secret(
 
 pub fn list_secrets(config: Config, prefix: Option<String>) -> io::Result<Vec<String>> {
     use std::iter::FromIterator;
-    Ok(Vec::from_iter(config.totp.keys().map(|k| k.clone())
+    Ok(Vec::from_iter(config.totp.keys().cloned()
         .filter(|_n| prefix.is_none())))
 }
 

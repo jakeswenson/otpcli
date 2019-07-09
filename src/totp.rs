@@ -23,11 +23,11 @@ const DIGITS_MODULUS: [u32; 9] = [
     10u32, // 1
     100u32, // 2
     1000u32, // 3
-    10000u32, // 4
-    100000u32, // 5
-    1000000u32, // 6
-    10000000u32, // 7
-    100000000u32, // 8
+    10_000u32, // 4
+    100_000u32, // 5
+    1_000_000u32, // 6
+    10_000_000u32, // 7
+    100_000_000u32, // 8
 ];
 
 pub fn totp<D: Digest>(
@@ -61,20 +61,18 @@ fn truncate(signature: &[u8]) -> u32 {
     let offset: usize = (signature[signature.len() - 1] & 0xF).into();
     let bytes = &signature[offset..offset + std::mem::size_of::<u32>()];
 
-    let high = bytes[0] as u32;
+    let high = u32::from(bytes[0]);
     let high_num = (high & 0x7F) << 24;
 
-    let mid = bytes[1] as u32;
+    let mid = u32::from(bytes[1]);
     let mid_num = mid << 16;
 
-    let lower = bytes[2] as u32;
+    let lower = u32::from(bytes[2]);
     let lower_num = lower << 8;
 
-    let bottom = bytes[3] as u32;
+    let bottom = u32::from(bytes[3]);
 
-    let result = high_num | mid_num | lower_num | bottom;
-
-    result
+    high_num | mid_num | lower_num | bottom
 }
 
 #[cfg(test)]
@@ -87,9 +85,9 @@ fn verify() {
     let code = totp(b"12345678901234567890", Duration::from_secs(59), standard_time_window, 8, Sha1::new());
     assert_eq!(code, "94287082");
 
-    let code = totp(b"12345678901234567890", Duration::from_secs(1111111109), standard_time_window, 8, Sha1::new());
+    let code = totp(b"12345678901234567890", Duration::from_secs(1_111_111_109), standard_time_window, 8, Sha1::new());
     assert_eq!(code, "07081804");
 
-    let code = totp(b"12345678901234567890", Duration::from_secs(1234567890), standard_time_window, 8, Sha1::new());
+    let code = totp(b"12345678901234567890", Duration::from_secs(1_234_567_890), standard_time_window, 8, Sha1::new());
     assert_eq!(code, "89005924");
 }
