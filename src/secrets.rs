@@ -1,12 +1,13 @@
+use crate::config::{SecretLocation, TotpOptions};
+use crate::{TotpError, TotpResult};
 use keyring::Keyring;
-use crate::config::{TotpOptions, SecretLocation};
-use crate::{TotpResult, TotpError};
 
 pub fn get_secret(name: &str, totp_config: &TotpOptions) -> TotpResult<String> {
     let secret = totp_config.secret();
     match totp_config.storage().unwrap_or(&SecretLocation::Config) {
-        SecretLocation::Config =>
-            Ok(secret.cloned().ok_or(TotpError("Config secret but no secret"))?),
+        SecretLocation::Config => Ok(secret
+            .cloned()
+            .ok_or(TotpError("Config secret but no secret"))?),
         SecretLocation::KeyChain => {
             let keyring = Keyring::new("urn:otpcli", name);
             Ok(keyring.get_password()?)

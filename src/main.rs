@@ -4,7 +4,11 @@ use std::io::prelude::*;
 use structopt::StructOpt;
 
 use cli::{Command, Options};
-use otp::{self, config::{self, Config}, TotpResult};
+use otp::{
+    self,
+    config::{self, Config},
+    TotpResult,
+};
 
 mod cli;
 use clipboard::{ClipboardContext, ClipboardProvider};

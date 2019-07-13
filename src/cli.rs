@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
-use structopt::StructOpt;
-use otp::{TotpResult, TotpError};
 use crate::cli::Command::GenerateToken;
+use otp::{TotpError, TotpResult};
+use structopt::StructOpt;
 
 #[derive(StructOpt)]
 #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
@@ -64,11 +64,13 @@ impl Options {
         if self.name.is_none() && self.cmd.is_none() {
             println!("Missing Command or TOTP token name");
             Options::clap().print_help()?;
-            return Err(Box::new(TotpError::of("No command or TOTP token name provided")));
+            return Err(Box::new(TotpError::of(
+                "No command or TOTP token name provided",
+            )));
         }
 
-        Ok(self.cmd.clone().unwrap_or_else(|| {
-            GenerateToken { name: self.name.clone().unwrap() }
+        Ok(self.cmd.clone().unwrap_or_else(|| GenerateToken {
+            name: self.name.clone().unwrap(),
         }))
     }
 }

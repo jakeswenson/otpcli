@@ -4,13 +4,16 @@ use crypto::digest::Digest;
 pub use crypto::sha1::Sha1;
 
 use super::config::Config;
-use crate::{TotpResult, TotpError};
 use super::secrets;
+use crate::{TotpError, TotpResult};
 
 static ALPHABET: base32::Alphabet = base32::Alphabet::RFC4648 { padding: false };
 
 pub fn standard_totp(config: Config, name: &str) -> TotpResult<String> {
-    let totp_settings = config.totp.get(name).ok_or(TotpError("Can't find the specified config"))?;
+    let totp_settings = config
+        .totp
+        .get(name)
+        .ok_or(TotpError("Can't find the specified config"))?;
 
     let now = SystemTime::now();
     let seconds: Duration = now
@@ -20,13 +23,7 @@ pub fn standard_totp(config: Config, name: &str) -> TotpResult<String> {
     let secret = base32::decode(ALPHABET, &secrets::get_secret(name, &totp_settings)?)
         .ok_or(TotpError("Failed to decode secret from base32"))?;
 
-    totp(
-        &secret,
-        seconds,
-        Duration::from_secs(30),
-        6,
-        Sha1::new(),
-    )
+    totp(&secret, seconds, Duration::from_secs(30), 6, Sha1::new())
 }
 
 const DIGITS_MODULUS: [u32; 9] = [
@@ -89,7 +86,7 @@ fn truncate(signature: &[u8]) -> u32 {
 
 #[cfg(test)]
 #[test]
-fn verify() {
+fn verify() -> TotpResult<()> {
     let standard_time_window = Duration::from_secs(30);
 
     // test vectors from the RFC
@@ -100,7 +97,7 @@ fn verify() {
         standard_time_window,
         8,
         Sha1::new(),
-    );
+    )?;
     assert_eq!(code, "94287082");
 
     let code = totp(
@@ -109,7 +106,7 @@ fn verify() {
         standard_time_window,
         8,
         Sha1::new(),
-    );
+    )?;
     assert_eq!(code, "07081804");
 
     let code = totp(
@@ -118,6 +115,8 @@ fn verify() {
         standard_time_window,
         8,
         Sha1::new(),
-    );
+    )?;
     assert_eq!(code, "89005924");
+
+    Ok(())
 }

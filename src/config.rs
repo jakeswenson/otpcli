@@ -1,11 +1,11 @@
-use std::collections::HashMap;
-use std::path::{PathBuf, Path};
 use super::TokenAlgorithm;
+use std::collections::HashMap;
 use std::default::Default;
 use std::io::Result as IoResult;
+use std::path::{Path, PathBuf};
 
+use crate::{TotpConfigError, TotpResult};
 use serde::{self, Deserialize, Serialize};
-use crate::{TotpResult, TotpConfigError};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
@@ -17,7 +17,7 @@ pub enum SecretLocation {
     #[serde(rename = "config")]
     Config,
     #[serde(rename = "keychain")]
-    KeyChain
+    KeyChain,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -28,7 +28,7 @@ pub struct TotpOptions {
 }
 
 impl TotpOptions {
-    pub fn storage(&self) -> Option<&SecretLocation>{
+    pub fn storage(&self) -> Option<&SecretLocation> {
         self.storage.as_ref()
     }
 
@@ -44,7 +44,7 @@ impl TotpOptions {
         TotpOptions {
             storage: Some(SecretLocation::Config),
             secret: Some(secret),
-            algorithm: Some(algorithm)
+            algorithm: Some(algorithm),
         }
     }
 
@@ -52,7 +52,7 @@ impl TotpOptions {
         TotpOptions {
             storage: Some(SecretLocation::KeyChain),
             secret: None,
-            algorithm: Some(algorithm)
+            algorithm: Some(algorithm),
         }
     }
 }
@@ -67,8 +67,10 @@ impl Default for Config {
 
 impl Config {
     pub fn lookup(&self, name: &str) -> TotpResult<&TotpOptions> {
-        Ok(self.totp.get(name)
-               .ok_or_else(|| TotpConfigError(format!("Unable to find config named '{}'", name)))?)
+        Ok(self
+            .totp
+            .get(name)
+            .ok_or_else(|| TotpConfigError(format!("Unable to find config named '{}'", name)))?)
     }
 }
 

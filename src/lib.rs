@@ -4,28 +4,31 @@ use stoken::{self, chrono::Utc};
 use config::{Config, TotpOptions};
 
 pub mod config;
-pub mod totp;
 mod secrets;
+pub mod totp;
 
-use std::{result::Result, error::Error, fmt::{Formatter, Display, Result as FmtResult}};
-use std::path::Path;
 use std::iter::FromIterator;
+use std::path::Path;
+use std::{
+    error::Error,
+    fmt::{Display, Formatter, Result as FmtResult},
+    result::Result,
+};
 
 #[derive(Debug)]
 pub struct TotpError<'a>(&'a str);
 
-impl <'a> Display for TotpError<'a> {
+impl<'a> Display for TotpError<'a> {
     fn fmt(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "{}", self.0)
     }
 }
 
-impl <'a> Error for TotpError<'a> {
-}
+impl<'a> Error for TotpError<'a> {}
 
-impl <'a> TotpError<'a> {
+impl<'a> TotpError<'a> {
     pub fn of(msg: &'a str) -> Self {
-        return TotpError(msg)
+        return TotpError(msg);
     }
 }
 
@@ -38,8 +41,7 @@ impl Display for TotpConfigError {
     }
 }
 
-impl Error for TotpConfigError {
-}
+impl Error for TotpConfigError {}
 
 pub type TotpResult<T> = Result<T, Box<dyn Error>>;
 
@@ -76,7 +78,7 @@ pub fn add_totp_secret<P: AsRef<Path>>(
     base32::decode(base32::Alphabet::RFC4648 { padding: false }, &secret)
         .expect("Invalid base32 OTP secret");
 
-    add_secret(&config, config_dir, name, secret, TokenAlgorithm::TotpSha1).map(|_|())
+    add_secret(&config, config_dir, name, secret, TokenAlgorithm::TotpSha1).map(|_| ())
 }
 
 pub fn add_stoken<P: AsRef<Path>>(
@@ -122,10 +124,7 @@ pub fn add_secret<P: AsRef<Path>>(
 }
 
 pub fn list_secrets(config: Config, _prefix: Option<String>) -> TotpResult<Vec<String>> {
-    Ok(Vec::from_iter(
-        config.totp.keys()
-            .cloned(),
-    ))
+    Ok(Vec::from_iter(config.totp.keys().cloned()))
 }
 
 pub fn delete_secret<P: AsRef<Path>>(
@@ -142,7 +141,7 @@ pub fn delete_secret<P: AsRef<Path>>(
 
 pub fn migrate_secrets_to_keychain<P: AsRef<Path>>(
     mut config: Config,
-    config_dir: P
+    config_dir: P,
 ) -> TotpResult<()> {
     for (name, value) in config.clone().totp.iter() {
         println!("Migrating {}", name);
@@ -153,7 +152,8 @@ pub fn migrate_secrets_to_keychain<P: AsRef<Path>>(
             config_dir.as_ref(),
             name,
             secret,
-            value.algorithm())?;
+            value.algorithm(),
+        )?;
     }
 
     Ok(())
