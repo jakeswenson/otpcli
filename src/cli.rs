@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
 use structopt::StructOpt;
+use otp::{TotpResult, TotpError};
+use crate::cli::Command::GenerateToken;
 
 #[derive(StructOpt)]
 #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
@@ -18,9 +20,13 @@ pub struct Options {
     /// Adds a newline printed at the end out output
     #[structopt(short = "n", long = "newline")]
     pub end_with_newline: bool,
+
+    /// Copies the generated token to the clipboard
+    #[structopt(long = "copy")]
+    pub copy_to_clipboard: bool,
 }
 
-#[derive(StructOpt)]
+#[derive(StructOpt, Clone)]
 pub enum Command {
     /// Add/Update a new TOTP secret
     #[structopt(name = "add")]
@@ -43,4 +49,26 @@ pub enum Command {
     #[structopt(name = "delete")]
     #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
     DeleteSecret { name: String },
+    /// Migrate secrets stored in the config to be stored in the keychain
+    #[structopt(name = "migrate-to-keychain")]
+    #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
+    UseKeychain,
+    /// Generate a token
+    #[structopt(name = "generate")]
+    #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
+    GenerateToken { name: String },
+}
+
+impl Options {
+    pub fn command(&self) -> TotpResult<Command> {
+        if self.name.is_none() && self.cmd.is_none() {
+            println!("Missing Command or TOTP token name");
+            Options::clap().print_help()?;
+            return Err(Box::new(TotpError::of("No command or TOTP token name provided")));
+        }
+
+        Ok(self.cmd.clone().unwrap_or_else(|| {
+            GenerateToken { name: self.name.clone().unwrap() }
+        }))
+    }
 }

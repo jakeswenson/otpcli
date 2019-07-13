@@ -4,26 +4,29 @@ use crypto::digest::Digest;
 pub use crypto::sha1::Sha1;
 
 use super::config::Config;
+use crate::{TotpResult, TotpError};
+use super::secrets;
 
 static ALPHABET: base32::Alphabet = base32::Alphabet::RFC4648 { padding: false };
 
-pub fn standard_totp(config: Config, name: &str) -> Option<String> {
-    let totp_settings = config.totp.get(name)?;
+pub fn standard_totp(config: Config, name: &str) -> TotpResult<String> {
+    let totp_settings = config.totp.get(name).ok_or(TotpError("Can't find the specified config"))?;
 
     let now = SystemTime::now();
     let seconds: Duration = now
         .duration_since(SystemTime::UNIX_EPOCH)
         .expect("Can't get time since UNIX_EPOCH?");
 
-    let secret = base32::decode(ALPHABET, &totp_settings.secret).expect("Invalid base32 secret");
+    let secret = base32::decode(ALPHABET, &secrets::get_secret(name, &totp_settings)?)
+        .ok_or(TotpError("Failed to decode secret from base32"))?;
 
-    Some(totp(
+    totp(
         &secret,
         seconds,
         Duration::from_secs(30),
         6,
         Sha1::new(),
-    ))
+    )
 }
 
 const DIGITS_MODULUS: [u32; 9] = [
@@ -44,7 +47,7 @@ pub fn totp<D: Digest>(
     time_window: Duration,
     length: usize,
     algo: D,
-) -> String {
+) -> TotpResult<String> {
     use byteorder::{BigEndian, ByteOrder};
     use crypto::{hmac::Hmac, mac::Mac};
 
@@ -63,7 +66,7 @@ pub fn totp<D: Digest>(
     // zero pad using format fills
     // https://doc.rust-lang.org/std/fmt/#fillalignment
     // https://doc.rust-lang.org/std/fmt/#width
-    format!("{:0>width$}", code, width = length)
+    Ok(format!("{:0>width$}", code, width = length))
 }
 
 fn truncate(signature: &[u8]) -> u32 {

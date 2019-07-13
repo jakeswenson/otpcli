@@ -1,6 +1,6 @@
 [package]
 name = "otpcli"
-version = "0.4.1-beta.5"
+version = "0.5.0-alpha.0"
 authors = ["Jake Swenson <jake@jakeswenson.com>"]
 description = "A simple one-time-password CLI, with support for TOTP and STOKEN."
 license = "MIT"
@@ -19,6 +19,8 @@ serde = { version = "^1.0", features = ["derive"] }
 structopt = "^0"
 dirs = "^1.0"
 stoken = "^0"
+keyring = "^0"
+clipboard = "^0"
 
 [lib]
 name = "otp"

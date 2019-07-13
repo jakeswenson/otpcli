@@ -4,67 +4,52 @@ use std::io::prelude::*;
 use structopt::StructOpt;
 
 use cli::{Command, Options};
-use otp::{
-    self,
-    config::{self, Config},
-};
+use otp::{self, config::{self, Config}, TotpResult};
 
 mod cli;
+use clipboard::{ClipboardContext, ClipboardProvider};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let opts = Options::from_args();
+    let opts: Options = Options::from_args();
 
     let config_dir = config::default_config_dir();
     let config = config::load_config(&config_dir)?;
 
-    match opts.cmd {
-        Some(Command::AddSecret { name, secret }) => {
-            otp::add_totp_secret(config, config_dir, name, secret.replace(" ", ""))?;
-            Ok(())
-        }
-        Some(Command::ImportStoken { name, path, pin }) => {
-            let token = stoken::read_file(path);
-            let token = stoken::RSAToken::from_xml(token, &pin);
-            let exported_token = stoken::export::export(token).expect("Unable to export RSA Token");
-            otp::add_secret(
-                config,
-                config_dir,
-                name,
-                exported_token,
-                otp::TokenAlgorithm::SToken,
-            )?;
-            Ok(())
-        }
-        Some(Command::ListSecrets { prefix }) => {
+    match opts.command()? {
+        Command::GenerateToken { name } => generate_token(opts, config, name),
+        Command::ListSecrets { prefix } => {
             let secrets = otp::list_secrets(config, prefix)?;
             for sec in secrets {
                 println!("- {}", sec);
             }
             Ok(())
         }
-        Some(Command::DeleteSecret { name }) => {
+        Command::AddSecret { name, secret } => {
+            otp::add_totp_secret(config, config_dir, &name, secret.replace(" ", ""))?;
+            Ok(())
+        }
+        Command::ImportStoken { name, path, pin } => {
+            otp::add_stoken(&config, config_dir, &name, path, &pin)?;
+            Ok(())
+        }
+        Command::DeleteSecret { name } => {
             otp::delete_secret(config, config_dir, name)?;
             Ok(())
         }
-        None => generate_token(opts, config),
+        Command::UseKeychain => {
+            otp::migrate_secrets_to_keychain(config, config_dir)?;
+            Ok(())
+        }
     }
 }
 
-fn generate_token(opts: Options, config: Config) -> Result<(), Box<dyn Error>> {
-    let name: Option<String> = opts.name;
-    if name.is_none() {
-        println!("TOTP name not provided");
-        Options::clap().print_help()?;
-        return Ok(());
-    }
-
-    let name = name.unwrap();
-
+fn generate_token(opts: Options, config: Config, name: String) -> TotpResult<()> {
     let code = match otp::token(config, &name) {
-        Some(token) => token,
-        None => {
+        Ok(token) => token,
+        Err(e) => {
+            println!("Error: {}", e);
             println!(
-                "a TOTP config named `{}` was not found, did you add a secret with that name?",
+                "a TOTP config named '{}' was not found, did you add a secret with that name?",
                 name
             );
             Options::clap().print_help()?;
@@ -72,11 +57,17 @@ fn generate_token(opts: Options, config: Config) -> Result<(), Box<dyn Error>> {
         }
     };
 
+    if opts.copy_to_clipboard {
+        let mut clipboard: ClipboardContext = ClipboardProvider::new()?;
+        clipboard.set_contents(code.clone())?;
+    }
+
     if opts.end_with_newline {
         println!("{}", code);
     } else {
         print!("{}", code);
         std::io::stdout().flush()?;
     }
+
     Ok(())
 }
