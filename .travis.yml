@@ -1,8 +1,24 @@
 language: rust
 cache: cargo
-os:
-  - osx
-  - linux
+matrix:
+  include:
+    - name: "Linux (no features)"
+      os: linux
+      dist: xenial
+      env: DEPLOYABLE=true
+    - name: "Linux (all features)"
+      os: linux
+      dist: xenial
+      services: xvfb
+      addons:
+        apt:
+          packages:
+            - libdbus-1-dev
+            - gnome-keyring
+            - python3
+      env: OTPCLI_ALL_FEATURES=true
+    - name: "mac os"
+      os: osx
 before_script:
 - rustup component add rustfmt
 - rustup component add clippy
@@ -12,5 +28,6 @@ deploy:
   provider: cargo
   on:
     tags: true
+    condition: $DEPLOYABLE = true
   token:
     secure: X62/N5+y1REYd10r+6/YABmGwMAQV2iEQBhhCRHAPOvz4bO72FNsqMnt2DjM1wMBRYFv4wwU5i9wkPJoaRQiGD9f8DbPsVy15aHrfSOFqoHnSCJ9jDO3pjt92kcj3y2Oqkb3O7J7+kim8N8905XPcdwQmn1Y5zF+zwxjy5J1bvyXPA+ZwwsdakpXhxoQ1qqtdz8HUX7nXRhtZphLYlYeYUS05+Vi5G/7W7mAOgaaX5up/RX1qd/neSRiC5Kap5WF6QgRmZOcNw+MM/NpTaCTEQ4pBkepMxpA/9+jilHh4zDPjUb/xtFHrfUXcSVCCbdQ44iwYAdwP2NXMsaiDRgQ8rfABI/rohCrMiFuOBraBJLy1aq9jEfNKcBjQabe12KHdWNS5q62NOlt9JfEzQpzFytDzLNRFdiywb8d5P76tLh++10cSnDi32HSt95wWimOTCR5Jm2wHjp5/hgwRIZy7m6FnUIpXQIVezpZIOfAMuEbEefX1v/vXR9WTAo4R9+Ov+HkarZVYH+o3Rwkz4dD6VTcAfW86Fn+ptyWtIxM8zzK8/vPPC6PXYh54vQq2Iz53o/8YV1tUK3UXBB7EZM9NWhwCFROHSsd1yQ3yw+fyjyUnYYBtT4JRHZ5G56S0/k7OOgFbvUGMYIq5vn+SMfpeQvx0DfK1prqn9ZicwbcrUs=

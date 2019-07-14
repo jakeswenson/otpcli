@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
 : ${TRAVIS_OS_NAME:=osx}
+: ${OTPCLI_ALL_FEATURES:=false}
 
 CARGO_ARGS=()
 
 function set_cargo_args() {
 
-    if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+    if [ "$TRAVIS_OS_NAME" = "linux" -a "$OTPCLI_ALL_FEATURES" != "true" ]; then
         CARGO_ARGS+=(--no-default-features)
     fi
 }
