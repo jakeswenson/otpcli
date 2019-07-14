@@ -16,6 +16,10 @@ matrix:
             - libdbus-1-dev
             - gnome-keyring
             - python3
+            - libxcb-shape0
+            - libxcb-shape0-dev
+            - libxcb-xfixes0-dev
+            - libxcb-xfixes0
       env: OTPCLI_ALL_FEATURES=true
     - name: "mac os"
       os: osx
