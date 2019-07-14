@@ -13,7 +13,7 @@ matrix:
       addons:
         apt:
           packages:
-            - gnome-keyring
+            - libdbus-1-dev
             - libxcb-shape0
             - libxcb-shape0-dev
             - libxcb-xfixes0-dev
