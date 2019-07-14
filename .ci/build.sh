@@ -16,6 +16,6 @@ set_cargo_args
 set -x
 
 cargo fmt --all -- --check
-cargo clippy -- "${CARGO_ARGS[@]}"
+cargo clippy --all-targets "${CARGO_ARGS[@]}"
 cargo build "${CARGO_ARGS[@]}"
 cargo test  "${CARGO_ARGS[@]}"
