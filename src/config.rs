@@ -16,6 +16,7 @@ pub struct Config {
 pub enum SecretLocation {
     #[serde(rename = "config")]
     Config,
+    #[cfg(feature = "keychain")]
     #[serde(rename = "keychain")]
     KeyChain,
 }
@@ -48,6 +49,7 @@ impl TotpOptions {
         }
     }
 
+    #[cfg(feature = "keychain")]
     pub fn new_keychain_stored_secret(algorithm: TokenAlgorithm) -> Self {
         TotpOptions {
             storage: Some(SecretLocation::KeyChain),

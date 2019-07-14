@@ -1,6 +1,8 @@
 use std::error::Error;
 use std::io::prelude::*;
 
+#[cfg(feature = "copy")]
+use clipboard::{ClipboardContext, ClipboardProvider};
 use structopt::StructOpt;
 
 use cli::{Command, Options};
@@ -11,7 +13,6 @@ use otp::{
 };
 
 mod cli;
-use clipboard::{ClipboardContext, ClipboardProvider};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let opts: Options = Options::from_args();
@@ -47,6 +48,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 }
 
+#[cfg(feature = "copy")]
+fn copy_to_clipboard(code: &str) -> TotpResult<()> {
+    let mut clipboard: ClipboardContext = ClipboardProvider::new()?;
+    clipboard.set_contents(code.to_string())?;
+    Ok(())
+}
+
+#[cfg(not(feature = "copy"))]
+fn copy_to_clipboard(_code: &str) -> TotpResult<()> {
+    Ok(())
+}
+
 fn generate_token(opts: Options, config: Config, name: String) -> TotpResult<()> {
     let code = match otp::token(config, &name) {
         Ok(token) => token,
@@ -61,9 +74,8 @@ fn generate_token(opts: Options, config: Config, name: String) -> TotpResult<()>
         }
     };
 
-    if opts.copy_to_clipboard {
-        let mut clipboard: ClipboardContext = ClipboardProvider::new()?;
-        clipboard.set_contents(code.clone())?;
+    if cfg!(feature = "copy") {
+        copy_to_clipboard(&code)?;
     }
 
     if opts.end_with_newline {

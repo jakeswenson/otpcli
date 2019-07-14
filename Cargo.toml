@@ -10,6 +10,19 @@ repository = "https://github.com/jakeswenson/otpcli/"
 [badges]
 travis-ci = {repository="jakeswenson/otpcli", branch="master"}
 
+[lib]
+name = "otp"
+path = "src/lib.rs"
+
+[[bin]]
+name = "otpcli"
+path = "src/main.rs"
+
+[features]
+default = ["keychain", "copy"]
+keychain = ["keyring"]
+copy = ["clipboard"]
+
 [dependencies]
 rust-crypto = "^0"
 byteorder = "^1.2"
@@ -19,13 +32,5 @@ serde = { version = "^1.0", features = ["derive"] }
 structopt = "^0"
 dirs = "^1.0"
 stoken = "^0"
-keyring = "^0"
-clipboard = "^0"
-
-[lib]
-name = "otp"
-path = "src/lib.rs"
-
-[[bin]]
-name = "otpcli"
-path = "src/main.rs"
+keyring = { version = "^0", optional = true }
+clipboard = { version = "^0", optional = true }

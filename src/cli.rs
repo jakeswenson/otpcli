@@ -22,6 +22,7 @@ pub struct Options {
     pub end_with_newline: bool,
 
     /// Copies the generated token to the clipboard
+    #[cfg(feature = "copy")]
     #[structopt(long = "copy")]
     pub copy_to_clipboard: bool,
 }
