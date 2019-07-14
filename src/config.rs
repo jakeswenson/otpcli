@@ -37,7 +37,7 @@ impl TotpOptions {
     }
 
     pub fn algorithm(&self) -> TokenAlgorithm {
-        self.algorithm.clone().unwrap_or(TokenAlgorithm::TotpSha1)
+        self.algorithm.unwrap_or(TokenAlgorithm::TotpSha1)
     }
 
     pub fn new_config_stored_secret(secret: String, algorithm: TokenAlgorithm) -> Self {

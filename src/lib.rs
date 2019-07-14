@@ -28,7 +28,7 @@ impl<'a> Error for TotpError<'a> {}
 
 impl<'a> TotpError<'a> {
     pub fn of(msg: &'a str) -> Self {
-        return TotpError(msg);
+        TotpError(msg)
     }
 }
 
