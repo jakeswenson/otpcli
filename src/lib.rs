@@ -144,7 +144,6 @@ pub fn migrate_secrets_to_keychain<P: AsRef<Path>>(
     for (name, value) in config.clone().totp.iter() {
         println!("Migrating {}", name);
         let secret = secrets::get_secret(name, value)?;
-        println!("Got secret {}", secret);
         config = add_secret(
             &config,
             config_dir.as_ref(),
