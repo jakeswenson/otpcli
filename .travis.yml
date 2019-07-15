@@ -40,6 +40,7 @@ deploy:
     on:
       tags: true
   - provider: cargo
+    skip_cleanup: true
     on:
       tags: true
       condition: $DEPLOYABLE = true
