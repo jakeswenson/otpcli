@@ -6,6 +6,7 @@ description = "A simple one-time-password CLI, with support for TOTP and STOKEN.
 license = "MIT"
 edition = "2018"
 repository = "https://github.com/jakeswenson/otpcli/"
+readme = "README.md"
 
 [badges]
 travis-ci = {repository="jakeswenson/otpcli", branch="master"}
