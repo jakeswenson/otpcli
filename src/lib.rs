@@ -136,6 +136,7 @@ pub fn delete_secret<P: AsRef<Path>>(
     Ok(())
 }
 
+#[cfg(feature = "keychain")]
 pub fn migrate_secrets_to_keychain<P: AsRef<Path>>(
     mut config: Config,
     config_dir: P,

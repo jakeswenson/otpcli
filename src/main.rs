@@ -41,6 +41,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             otp::delete_secret(config, config_dir, name)?;
             Ok(())
         }
+        #[cfg(feature = "keychain")]
         Command::UseKeychain => {
             otp::migrate_secrets_to_keychain(config, config_dir)?;
             Ok(())

@@ -51,6 +51,7 @@ pub enum Command {
     #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
     DeleteSecret { name: String },
     /// Migrate secrets stored in the config to be stored in the keychain
+    #[cfg(feature = "keychain")]
     #[structopt(name = "migrate-to-keychain")]
     #[structopt(raw(setting = "structopt::clap::AppSettings::ColoredHelp"))]
     UseKeychain,
