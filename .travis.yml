@@ -5,7 +5,7 @@ matrix:
     - name: "Linux (no features)"
       os: linux
       dist: xenial
-      env: DEPLOYABLE=true DEPLOY_NAME=linux.no-features
+      env: DEPLOY_NAME=linux.no-features
     - name: "Linux (all features)"
       os: linux
       dist: xenial
@@ -21,7 +21,7 @@ matrix:
       env: OTPCLI_ALL_FEATURES=true DEPLOY_NAME=linux.all-features
     - name: "mac os"
       os: osx
-      env: DEPLOY_NAME=osx
+      env: DEPLOYABLE=true DEPLOY_NAME=osx
 before_script:
 - rustup component add rustfmt
 - rustup component add clippy
