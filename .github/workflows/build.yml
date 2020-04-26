@@ -10,6 +10,7 @@ jobs:
   static-analysis:
     runs-on: macos-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Install cargo components
         run: |
           rustup component add rustfmt
