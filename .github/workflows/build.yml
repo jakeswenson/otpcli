@@ -8,8 +8,8 @@ on:
 
 jobs:
   static-analysis:
+    runs-on: macos-latest
     steps:
-      runs-on: macos-latest
       - name: Install cargo components
         run: |
           rustup component add rustfmt
