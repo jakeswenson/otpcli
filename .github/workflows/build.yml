@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies for default features on linux
-        if: matrix.os == 'ubuntu-latest' && matrix.features == 'default'
+        if: matrix.os == 'ubuntu-latest' && matrix.feature_build == 'default'
         run: sudo apt-get install libdbus-1-dev libxcb-shape0 libxcb-shape0-dev libxcb-xfixes0-dev libxcb-xfixes0
       - name: Build
         run: .ci/build.sh
