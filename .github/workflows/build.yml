@@ -18,7 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install cargo components
-        run: rustup component add rustfmt
+        run: |
+          rustup component add rustfmt
+          rustup component add clippy
       - name: Verify Styles
         run: cargo fmt --all -- --check
       - uses: actions-rs/clippy-check@v1
