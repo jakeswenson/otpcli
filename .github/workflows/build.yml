@@ -7,6 +7,19 @@ on:
     branches: [ master ]
 
 jobs:
+  static-analysis:
+    steps:
+      runs-on: macos-latest
+      - name: Install cargo components
+        run: |
+          rustup component add rustfmt
+          rustup component add clippy
+      - name: Rust Format
+        run: cargo fmt --all -- --check
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-features
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -17,16 +30,6 @@ jobs:
       FEATURE_BUILD: ${{matrix.feature_build}}
     steps:
       - uses: actions/checkout@v2
-      - name: Install cargo components
-        run: |
-          rustup component add rustfmt
-          rustup component add clippy
-      - name: Verify Styles
-        run: cargo fmt --all -- --check
-      - uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features
       - name: Install dependencies for default features on linux
         if: matrix.os == 'ubuntu-latest' && matrix.features == 'default'
         run: sudo apt-get install libdbus-1-dev libxcb-shape0 libxcb-shape0-dev libxcb-xfixes0-dev libxcb-xfixes0
