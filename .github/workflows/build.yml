@@ -17,6 +17,8 @@ jobs:
       FEATURE_BUILD: ${{matrix.feature_build}}
     steps:
       - uses: actions/checkout@v2
+      - name: Install cargo components
+        run: rustup component add rustfmt
       - name: Verify Styles
         run: cargo fmt --all -- --check
       - uses: actions-rs/clippy-check@v1
