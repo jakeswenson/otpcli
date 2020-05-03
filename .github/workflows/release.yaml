@@ -14,6 +14,11 @@ jobs:
         uses: jakeswenson/action-delete-latest-release@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate changelog
+        id: changelog
+        uses: metcalfc/changelog-generator@v0.3.2
+        with:
+          myToken: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -22,6 +27,7 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
+          body: ${{ steps.changelog.outputs.changelog }}
           draft: true
           prerelease: false
     outputs:
