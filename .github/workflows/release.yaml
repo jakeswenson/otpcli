@@ -6,7 +6,7 @@ on:
 name: Build, Release, Publish to GH and Cargo
 
 jobs:
-  build:
+  release:
     name: Release Build
     strategy:
       matrix:
@@ -27,9 +27,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Install dependencies for default features on linux
+        if: matrix.build.features == 'default' && matrix.build.type == 'linux'
+        run: sudo apt-get install libdbus-1-dev libxcb-shape0 libxcb-shape0-dev libxcb-xfixes0-dev libxcb-xfixes0
       - name: build
-        run: |
-          cargo build --release --locked --verbose
+        env:
+          FEATURE_BUILD: ${{matrix.build.features}}
+        run: .ci/build.sh
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -41,8 +45,9 @@ jobs:
           draft: true
           prerelease: false
       - name: Prepare for upload
-        run: |
-          ./.ci/setup_deploy.sh
+        env:
+          DEPLOY_NAME: ${{matrix.build.name}}
+        run: .ci/setup_deploy.sh
       - name: Upload Release Asset
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
