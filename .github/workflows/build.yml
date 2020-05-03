@@ -21,28 +21,24 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features
-  build-linux:
-    runs-on: ubuntu-latest
+  build:
     strategy:
       matrix:
-        feature_build: [no-default, default]
+        build:
+          - os: ubuntu-latest
+            features: no-default
+          - os: ubuntu-latest
+            features: default
+          - os: macos-10.15
+            features: default
+    runs-on: ${{matrix.build.os}}
     env:
-      FEATURE_BUILD: ${{matrix.feature_build}}
+      FEATURE_BUILD: ${{matrix.build.features}}
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies for default features on linux
-        if: matrix.feature_build == 'default'
+        if: matrix.build.features == 'default'
         run: sudo apt-get install libdbus-1-dev libxcb-shape0 libxcb-shape0-dev libxcb-xfixes0-dev libxcb-xfixes0
-      - name: Build
-        run: .ci/build.sh
-      - name: Run tests
-        run: .ci/test.sh
-  build-mac:
-    runs-on: macos-10.15
-    env:
-      FEATURE_BUILD: ${{matrix.feature_build}}
-    steps:
-      - uses: actions/checkout@v2
       - name: Build
         run: .ci/build.sh
       - name: Run tests
