@@ -56,6 +56,10 @@ jobs:
         env:
           DEPLOY_NAME: ${{matrix.build.name}}
         run: .ci/setup_deploy.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: results-${{matrix.build.name}}
+          path: ./deploy/
       - name: Upload Release Bin
         uses: actions/upload-release-asset@v1
         env:
