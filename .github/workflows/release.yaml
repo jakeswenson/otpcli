@@ -8,6 +8,7 @@ name: Build, Release, Publish to GH and Cargo
 jobs:
   create_release:
     name: Create Release
+    runs-on: ubuntu-latest
     steps:
       - name: Create Release
         id: create_release
