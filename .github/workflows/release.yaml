@@ -33,11 +33,11 @@ jobs:
             type: linux
             features: no-default
             os: ubuntu-latest
-            publish: true
           - name: 'linux'
             type: linux
             features: default
             os: ubuntu-latest
+            publish: true
           - name: 'macos'
             type: mac
             features: default
