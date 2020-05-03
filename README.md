@@ -47,4 +47,14 @@ SUBCOMMANDS:
     migrate-to-keychain    Migrate secrets stored in the config to be stored in the keychain
 ```
 
+# Release process
+
+Releases of `otpcli` are fully automated using GitHub Actions and initiated from [`cargo-release`](https://github.com/sunng87/cargo-release).
+To trigger a new release, run `cargo release <version_change>` where `<version_change>` is one of the support `cargo release` options:
+- `alpha`
+- `beta`
+- `rc`
+- `patch`
+- `minor`
+- `major`
 
