@@ -1,13 +1,30 @@
 on:
   push:
     tags:
-      - '*'
+      - 'v*'
 
 name: Build, Release, Publish to GH and Cargo
 
 jobs:
-  release:
+  create_release:
+    name: Create Release
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: true
+          prerelease: false
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+
+  build-release:
     name: Release Build
+    needs: create_release
     strategy:
       matrix:
         build:
@@ -34,16 +51,6 @@ jobs:
         env:
           FEATURE_BUILD: ${{matrix.build.features}}
         run: .ci/build.sh
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: v${{ github.ref }}
-          draft: true
-          prerelease: false
       - name: Prepare for upload
         env:
           DEPLOY_NAME: ${{matrix.build.name}}
@@ -54,7 +61,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url:  ${{needs.create_release.outputs.upload_url}} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           asset_path: ./deploy/otpcli.${{matrix.build.name}}.tar.xz
           asset_name: otpcli-${{matrix.build.type}}-${{matrix.build.features}}
           asset_content_type: application/tar
