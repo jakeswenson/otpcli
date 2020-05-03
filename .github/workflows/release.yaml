@@ -33,6 +33,7 @@ jobs:
             type: linux
             features: no-default
             os: ubuntu-latest
+            publish: true
           - name: 'linux'
             type: linux
             features: default
@@ -64,6 +65,9 @@ jobs:
         with:
           name: archive ${{matrix.build.name}}
           path: ./deploy/otpcli.${{matrix.build.name}}.tar.xz
+      - name: Cargo Publish
+        run: cargo plublish --locked --token "${{secrets.crates_token}}"
+        if: matrix.build.publish == true
       - name: Upload Release Bin
         uses: actions/upload-release-asset@v1
         env:
