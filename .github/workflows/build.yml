@@ -26,14 +26,14 @@ jobs:
       matrix:
         build:
           - type: linux
-            os: ubuntu-latest
             features: no-default
-          - type: linux
             os: ubuntu-latest
+          - type: linux
             features: default
+            os: ubuntu-latest
           - type: mac
-            os: macos-10.15
             features: default
+            os: macos-10.15
     runs-on: ${{matrix.build.os}}
     env:
       FEATURE_BUILD: ${{matrix.build.features}}

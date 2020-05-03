@@ -14,4 +14,4 @@ set_cargo_args
 
 set -x
 
-cargo build --verbose --locked "${CARGO_ARGS[@]}"
+cargo build --verbose --release --locked "${CARGO_ARGS[@]}"
