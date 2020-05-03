@@ -25,11 +25,14 @@ jobs:
     strategy:
       matrix:
         build:
-          - os: ubuntu-latest
+          - type: linux
+            os: ubuntu-latest
             features: no-default
-          - os: ubuntu-latest
+          - type: linux
+            os: ubuntu-latest
             features: default
-          - os: macos-10.15
+          - type: mac
+            os: macos-10.15
             features: default
     runs-on: ${{matrix.build.os}}
     env:
@@ -37,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies for default features on linux
-        if: matrix.build.features == 'default'
+        if: matrix.build.features == 'default' && matrix.build.type == 'linux'
         run: sudo apt-get install libdbus-1-dev libxcb-shape0 libxcb-shape0-dev libxcb-xfixes0-dev libxcb-xfixes0
       - name: Build
         run: .ci/build.sh
