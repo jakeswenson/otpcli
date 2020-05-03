@@ -3,13 +3,17 @@ on:
     tags:
       - 'v*'
 
-name: Build, Release, Publish to GH and Cargo
+name: Release
 
 jobs:
   create_release:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
+      - name: Delete Draft Releases
+        uses: jakeswenson/action-delete-latest-release@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
