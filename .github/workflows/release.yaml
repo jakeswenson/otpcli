@@ -10,10 +10,12 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
-      - name: Delete Draft Releases
+      - name: Delete Previous Draft Releases
         uses: jakeswenson/action-delete-latest-release@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout # needed so that changelog generator can pull the latest release tag
+        uses: actions/checkout@v2
       - name: Generate changelog
         id: changelog
         uses: metcalfc/changelog-generator@v0.3.2
