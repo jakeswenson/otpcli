@@ -61,9 +61,9 @@ jobs:
           name: otpcli-${{matrix.build.name}}
           path: ./deploy/otpcli-${{matrix.build.name}}
       - uses: actions/upload-artifact@v2
-      with:
-        name: archive ${{matrix.build.name}}
-        path: ./deploy/otpcli.${{matrix.build.name}}.tar.xz
+        with:
+          name: archive ${{matrix.build.name}}
+          path: ./deploy/otpcli.${{matrix.build.name}}.tar.xz
       - name: Upload Release Bin
         uses: actions/upload-release-asset@v1
         env:
