@@ -14,13 +14,18 @@ pub fn standard_totp(config: Config, name: &str) -> TotpResult<String> {
         .totp
         .get(name)
         .ok_or(TotpError("Can't find the specified config"))?;
+    let secret = secrets::get_secret(name, &totp_settings)?;
 
+    generate_code(secret)
+}
+
+pub fn generate_code(secret: String) -> TotpResult<String> {
     let now = SystemTime::now();
     let seconds: Duration = now
         .duration_since(SystemTime::UNIX_EPOCH)
         .expect("Can't get time since UNIX_EPOCH?");
 
-    let secret = base32::decode(ALPHABET, &secrets::get_secret(name, &totp_settings)?)
+    let secret = base32::decode(ALPHABET, &secret)
         .ok_or(TotpError("Failed to decode secret from base32"))?;
 
     totp(&secret, seconds, Duration::from_secs(30), 6, Sha1::new())
