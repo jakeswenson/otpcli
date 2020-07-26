@@ -1,11 +1,15 @@
 use serde::{self, Deserialize, Serialize};
-use stoken::{self, chrono::Utc};
 
 use config::Config;
 
 pub mod config;
 mod secrets;
 pub mod totp;
+
+#[cfg(feature = "rsa_stoken")]
+use crate::config::TotpOptions;
+#[cfg(feature = "rsa_stoken")]
+use stoken::{self, chrono::Utc};
 
 use std::iter::FromIterator;
 use std::path::Path;
@@ -49,23 +53,27 @@ pub type TotpResult<T> = Result<T, Box<dyn Error>>;
 pub enum TokenAlgorithm {
     #[serde(rename = "sha1")]
     TotpSha1,
+    #[cfg(feature = "rsa_stoken")]
     #[serde(rename = "stoken")]
     SToken,
 }
 
 impl Copy for TokenAlgorithm {}
 
-fn stoken(config: &Config, name: &str) -> TotpResult<String> {
-    let value = config.lookup(name)?;
-    let token = stoken::export::import(secrets::get_secret(name, value)?.to_string())
+#[cfg(feature = "rsa_stoken")]
+fn stoken(name: &str, options: &TotpOptions) -> TotpResult<String> {
+    let token = stoken::export::import(secrets::get_secret(name, options)?.to_string())
         .ok_or(TotpError("Unable to import secret as an RSA stoken secret"))?;
     Ok(stoken::generate(token, Utc::now()))
 }
 
-pub fn token(config: Config, name: &str) -> TotpResult<String> {
+pub fn token(name: &str, config: Config) -> TotpResult<String> {
+    let options = config.lookup(name)?;
+
     match config.lookup(name)?.algorithm() {
-        TokenAlgorithm::TotpSha1 => totp::standard_totp(config, name),
-        TokenAlgorithm::SToken => stoken(&config, name),
+        TokenAlgorithm::TotpSha1 => totp::standard_totp(name, options),
+        #[cfg(feature = "rsa_stoken")]
+        TokenAlgorithm::SToken => stoken(name, options),
     }
 }
 
@@ -81,6 +89,7 @@ pub fn add_totp_secret<P: AsRef<Path>>(
     add_secret(&config, config_dir, name, secret, TokenAlgorithm::TotpSha1).map(|_| ())
 }
 
+#[cfg(feature = "ras_stoken")]
 pub fn add_stoken<P: AsRef<Path>>(
     config: &Config,
     config_dir: P,

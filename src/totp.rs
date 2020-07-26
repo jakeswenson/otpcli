@@ -1,34 +1,70 @@
 use std::time::{Duration, SystemTime};
 
-use crypto::digest::Digest;
+pub use crypto;
+pub use crypto::digest::Digest;
 pub use crypto::sha1::Sha1;
 
-use super::config::Config;
-use super::secrets;
+use crate::config::TotpOptions;
 use crate::{TotpError, TotpResult};
+
+use super::secrets;
 
 static ALPHABET: base32::Alphabet = base32::Alphabet::RFC4648 { padding: false };
 
-pub fn standard_totp(config: Config, name: &str) -> TotpResult<String> {
-    let totp_settings = config
-        .totp
-        .get(name)
-        .ok_or(TotpError("Can't find the specified config"))?;
-    let secret = secrets::get_secret(name, &totp_settings)?;
+/// RFC6238 recommended time step duration
+/// See: https://tools.ietf.org/html/rfc6238#section-5.2
+pub const RFC6238_RECOMMENDED_TIMESTEP: Duration = Duration::from_secs(30);
 
-    generate_code(secret)
+/// Runs a standard TOTP for the provided config, looking up secrets using []()
+///
+/// # Examples
+/// ```rust
+/// use otp::config::TotpOptions;
+/// use otp::TokenAlgorithm;
+/// use otp::totp::standard_totp;
+/// let options = TotpOptions::new_config_stored_secret(
+///   "A SECRET".to_string(),
+///   TokenAlgorithm::TotpSha1);
+///
+/// let  code = standard_totp("test", &options).expect("Failed to generate a TOTP code");
+///
+/// assert_eq!(code.len(), 6);
+///
+/// const BASE_10: u32 = 10;
+/// assert!(code.chars().all(|c| c.is_digit(BASE_10)))
+///
+/// ```
+pub fn standard_totp(name: &str, options: &TotpOptions) -> TotpResult<String> {
+    let secret = secrets::get_secret(name, &options)?;
+
+    generate_sha1_code(secret)
 }
 
-pub fn generate_code(secret: String) -> TotpResult<String> {
+/// Generate a SHA1 TOTP code
+///
+/// # Examples
+/// ```rust
+/// use otp::totp::generate_sha1_code;
+/// let  code = generate_sha1_code("A BASE 32 SECRET".to_string()).expect("Failed to generate a TOTP code");
+///
+/// assert_eq!(code.len(), 6);
+///
+/// const BASE_10: u32 = 10;
+/// assert!(code.chars().all(|c| c.is_digit(BASE_10)))
+///
+/// ```
+pub fn generate_sha1_code(secret: String) -> TotpResult<String> {
     let now = SystemTime::now();
     let seconds: Duration = now
         .duration_since(SystemTime::UNIX_EPOCH)
         .expect("Can't get time since UNIX_EPOCH?");
 
-    let secret = base32::decode(ALPHABET, &secret)
+    let clean_secret = secret.replace(" ", "").to_uppercase();
+    let secret = base32::decode(ALPHABET, &clean_secret)
         .ok_or(TotpError("Failed to decode secret from base32"))?;
 
-    totp(&secret, seconds, Duration::from_secs(30), 6, Sha1::new())
+    let algo_sha1 = Sha1::new();
+    totp(&secret, seconds, RFC6238_RECOMMENDED_TIMESTEP, 6, algo_sha1)
 }
 
 const DIGITS_MODULUS: [u32; 9] = [
@@ -43,18 +79,38 @@ const DIGITS_MODULUS: [u32; 9] = [
     100_000_000u32, // 8
 ];
 
-pub fn totp<D: Digest>(
+/// Generate a RFC6238 TOTP code using the supplied secret, time, time step size, output length, and algorithm
+///
+/// # Examples
+/// ```rust
+/// // This SHA1 example is from the RFC: https://tools.ietf.org/html/rfc6238#appendix-B
+/// use std::time::Duration;
+/// use otp::totp::{Sha1, RFC6238_RECOMMENDED_TIMESTEP, totp};
+/// let secret = b"12345678901234567890";
+/// let time_since_epoch = Duration::from_secs(59);
+/// let output_length = 8;
+/// let algo = Sha1::new();
+///
+/// let totp_code = totp(secret, time_since_epoch, RFC6238_RECOMMENDED_TIMESTEP, 8, algo)
+///   .expect("Failed to generate TOTP code");
+///
+/// assert_eq!(totp_code, "94287082");
+/// ```
+pub fn totp<D>(
     secret: &[u8],
     time_since_epoch: Duration,
-    time_window: Duration,
+    time_step: Duration,
     length: usize,
     algo: D,
-) -> TotpResult<String> {
+) -> TotpResult<String>
+where
+    D: Digest,
+{
     use byteorder::{BigEndian, ByteOrder};
     use crypto::{hmac::Hmac, mac::Mac};
 
     let mut buf: [u8; 8] = [0; 8];
-    BigEndian::write_u64(&mut buf, time_since_epoch.as_secs() / time_window.as_secs());
+    BigEndian::write_u64(&mut buf, time_since_epoch.as_secs() / time_step.as_secs());
 
     let mut hmac1 = Hmac::new(algo, secret);
     hmac1.input(&buf);
@@ -90,38 +146,95 @@ fn truncate(signature: &[u8]) -> u32 {
 }
 
 #[cfg(test)]
-#[test]
-fn verify() -> TotpResult<()> {
-    let standard_time_window = Duration::from_secs(30);
+mod tests {
+    use super::*;
 
-    // test vectors from the RFC
-    // https://tools.ietf.org/html/rfc6238#appendix-B
-    let code = totp(
-        b"12345678901234567890",
-        Duration::from_secs(59),
-        standard_time_window,
-        8,
-        Sha1::new(),
-    )?;
-    assert_eq!(code, "94287082");
+    // Example code from
+    // https://tools.ietf.org/html/rfc6238#appendix-A
+    fn rfc6238_test<D: Digest>(
+        time_since_epoch: Duration,
+        digest: D,
+        expected_code: &str,
+    ) -> TotpResult<()> {
+        const RFC_SECRET_SEED: &[u8] = b"12345678901234567890";
 
-    let code = totp(
-        b"12345678901234567890",
-        Duration::from_secs(1_111_111_109),
-        standard_time_window,
-        8,
-        Sha1::new(),
-    )?;
-    assert_eq!(code, "07081804");
+        // Need to seed with the proper number of bytes (sha1 = 20 bytes, sha256 = 32, sha512 = 64)
+        let secret: Vec<u8> = std::iter::repeat(RFC_SECRET_SEED)
+            .flatten()
+            .take(digest.output_bytes())
+            .cloned()
+            .collect();
 
-    let code = totp(
-        b"12345678901234567890",
-        Duration::from_secs(1_234_567_890),
-        standard_time_window,
-        8,
-        Sha1::new(),
-    )?;
-    assert_eq!(code, "89005924");
+        let code = totp(
+            &secret,
+            time_since_epoch,
+            RFC6238_RECOMMENDED_TIMESTEP,
+            8,
+            digest,
+        )?;
 
-    Ok(())
+        assert_eq!(code, expected_code);
+
+        Ok(())
+    }
+
+    #[cfg(test)]
+    #[test]
+    fn rfc6238_sha1_tests() -> TotpResult<()> {
+        // test vectors from the RFC
+        // https://tools.ietf.org/html/rfc6238#appendix-B
+
+        fn algo() -> impl Digest {
+            Sha1::new()
+        }
+
+        rfc6238_test(Duration::from_secs(59), algo(), "94287082")?;
+        rfc6238_test(Duration::from_secs(1_111_111_109), algo(), "07081804")?;
+        rfc6238_test(Duration::from_secs(1_111_111_111), algo(), "14050471")?;
+        rfc6238_test(Duration::from_secs(1_234_567_890), algo(), "89005924")?;
+        rfc6238_test(Duration::from_secs(2_000_000_000), algo(), "69279037")?;
+        rfc6238_test(Duration::from_secs(20_000_000_000), algo(), "65353130")?;
+
+        Ok(())
+    }
+
+    #[cfg(test)]
+    #[test]
+    fn rfc6238_sha256_tests() -> TotpResult<()> {
+        // test vectors from the RFC
+        // https://tools.ietf.org/html/rfc6238#appendix-B
+
+        fn algo() -> impl Digest {
+            crypto::sha2::Sha256::new()
+        }
+
+        rfc6238_test(Duration::from_secs(59), algo(), "46119246")?;
+        rfc6238_test(Duration::from_secs(1_111_111_109), algo(), "68084774")?;
+        rfc6238_test(Duration::from_secs(1_111_111_111), algo(), "67062674")?;
+        rfc6238_test(Duration::from_secs(1_234_567_890), algo(), "91819424")?;
+        rfc6238_test(Duration::from_secs(2_000_000_000), algo(), "90698825")?;
+        rfc6238_test(Duration::from_secs(20_000_000_000), algo(), "77737706")?;
+
+        Ok(())
+    }
+
+    #[cfg(test)]
+    #[test]
+    fn rfc6238_sha512_tests() -> TotpResult<()> {
+        // test vectors from the RFC
+        // https://tools.ietf.org/html/rfc6238#appendix-B
+
+        fn algo() -> impl Digest {
+            crypto::sha2::Sha512::new()
+        }
+
+        rfc6238_test(Duration::from_secs(59), algo(), "90693936")?;
+        rfc6238_test(Duration::from_secs(1_111_111_109), algo(), "25091201")?;
+        rfc6238_test(Duration::from_secs(1_111_111_111), algo(), "99943326")?;
+        rfc6238_test(Duration::from_secs(1_234_567_890), algo(), "93441116")?;
+        rfc6238_test(Duration::from_secs(2_000_000_000), algo(), "38618901")?;
+        rfc6238_test(Duration::from_secs(20_000_000_000), algo(), "47863826")?;
+
+        Ok(())
+    }
 }

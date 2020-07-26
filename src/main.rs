@@ -33,6 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             otp::add_totp_secret(config, config_dir, &name, secret.replace(" ", ""))?;
             Ok(())
         }
+        #[cfg(feature = "ras_stoken")]
         Command::ImportStoken { name, path, pin } => {
             otp::add_stoken(&config, config_dir, &name, path, &pin)?;
             Ok(())
@@ -62,7 +63,7 @@ fn copy_to_clipboard(_code: &str) -> TotpResult<()> {
 }
 
 fn generate_token(opts: Options, config: Config, name: String) -> TotpResult<()> {
-    let code = match otp::token(config, &name) {
+    let code = match otp::token(&name, config) {
         Ok(token) => token,
         Err(e) => {
             println!("Error: {}", e);
@@ -76,7 +77,9 @@ fn generate_token(opts: Options, config: Config, name: String) -> TotpResult<()>
     };
 
     if cfg!(feature = "copy") {
-        copy_to_clipboard(&code)?;
+        if opts.copy_to_clipboard {
+            copy_to_clipboard(&code)?;
+        }
     }
 
     if opts.end_with_newline {

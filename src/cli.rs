@@ -1,3 +1,4 @@
+#[cfg(feature = "ras_stoken")]
 use std::path::PathBuf;
 
 use crate::cli::Command::GenerateToken;
@@ -34,6 +35,7 @@ pub enum Command {
     #[structopt(setting = structopt::clap::AppSettings::ColoredHelp)]
     AddSecret { name: String, secret: String },
     /// Import an RSAToken into otpcli
+    #[cfg(feature = "ras_stoken")]
     #[structopt(name = "import")]
     #[structopt(setting = structopt::clap::AppSettings::ColoredHelp)]
     ImportStoken {
