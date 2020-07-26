@@ -1,7 +1,6 @@
 #[cfg(feature = "ras_stoken")]
 use std::path::PathBuf;
 
-use crate::cli::Command::GenerateToken;
 use otp::{TotpError, TotpResult};
 use structopt::StructOpt;
 
@@ -73,7 +72,7 @@ impl Options {
             )));
         }
 
-        Ok(self.cmd.clone().unwrap_or_else(|| GenerateToken {
+        Ok(self.cmd.clone().unwrap_or_else(|| Command::GenerateToken {
             name: self.name.clone().unwrap(),
         }))
     }

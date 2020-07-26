@@ -1,3 +1,4 @@
+//! Provides RFC6238 compliant TOTP token generation.
 use std::time::{Duration, SystemTime};
 
 pub use crypto;
@@ -7,20 +8,47 @@ pub use crypto::sha1::Sha1;
 use crate::config::TotpOptions;
 use crate::{TotpError, TotpResult};
 
+use serde::{Deserialize, Serialize};
+
 use super::secrets;
 
 static ALPHABET: base32::Alphabet = base32::Alphabet::RFC4648 { padding: false };
 
-/// RFC6238 recommended time step duration
-/// See: https://tools.ietf.org/html/rfc6238#section-5.2
+/// [RFC6238-timestep]: https://tools.ietf.org/html/rfc6238#section-5.2
+/// [RFC6238 recommended][RFC6238-timestep] time step duration of 30 seconds.
 pub const RFC6238_RECOMMENDED_TIMESTEP: Duration = Duration::from_secs(30);
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum TokenAlgorithm {
+    #[serde(rename = "sha1")]
+    TotpSha1,
+    #[cfg(feature = "rsa_stoken")]
+    #[serde(rename = "stoken")]
+    SToken,
+}
+
+impl Copy for TokenAlgorithm {}
+
+trait AsDigest {
+    fn new(&self) -> Box<dyn Digest>;
+}
+
+impl AsDigest for TokenAlgorithm {
+    fn new(&self) -> Box<dyn Digest> {
+        Box::new(match self {
+            TokenAlgorithm::TotpSha1 => Sha1::new(),
+            #[cfg(feature = "rsa_stoken")]
+            TokenAlgorithm::SToken => unreachable!("SToken cannot be used as a digest method"),
+        })
+    }
+}
 
 /// Runs a standard TOTP for the provided config, looking up secrets using []()
 ///
 /// # Examples
 /// ```rust
 /// use otp::config::TotpOptions;
-/// use otp::TokenAlgorithm;
+/// use otp::totp::TokenAlgorithm;
 /// use otp::totp::standard_totp;
 /// let options = TotpOptions::new_config_stored_secret(
 ///   "A SECRET".to_string(),
@@ -36,8 +64,12 @@ pub const RFC6238_RECOMMENDED_TIMESTEP: Duration = Duration::from_secs(30);
 /// ```
 pub fn standard_totp(name: &str, options: &TotpOptions) -> TotpResult<String> {
     let secret = secrets::get_secret(name, &options)?;
-
     generate_sha1_code(secret)
+}
+
+/// Cleans a base32 secret by removing spaces and making sure it's upper-cased.
+pub fn clean_secret(secret: &str) -> String {
+    secret.replace(" ", "").to_uppercase()
 }
 
 /// Generate a SHA1 TOTP code

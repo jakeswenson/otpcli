@@ -1,15 +1,29 @@
-use super::TokenAlgorithm;
 use std::collections::HashMap;
 use std::default::Default;
 use std::io::Result as IoResult;
 use std::path::{Path, PathBuf};
 
+use crate::totp::TokenAlgorithm;
 use crate::{TotpConfigError, TotpResult};
 use serde::{self, Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
-    pub totp: std::collections::HashMap<String, TotpOptions>,
+    totp: HashMap<String, TotpOptions>,
+}
+
+impl Config {
+    pub fn codes(&self) -> &HashMap<String, TotpOptions> {
+        &self.totp
+    }
+
+    pub fn insert(&mut self, name: String, options: TotpOptions) {
+        self.totp.insert(name, options);
+    }
+
+    pub fn remove(&mut self, name: &str) {
+        self.totp.remove(name);
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -1,5 +1,5 @@
 use crate::config::{SecretLocation, TotpOptions};
-use crate::{TokenAlgorithm, TotpError, TotpResult};
+use crate::{totp::TokenAlgorithm, TotpError, TotpResult};
 #[cfg(feature = "keychain")]
 use keyring::Keyring;
 

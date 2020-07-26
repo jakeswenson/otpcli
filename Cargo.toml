@@ -17,7 +17,7 @@ path = "src/lib.rs"
 
 [[bin]]
 name = "otpcli"
-path = "src/main.rs"
+path = "src/otpcli/main.rs"
 
 [features]
 default = ["keychain", "copy"]
@@ -36,6 +36,11 @@ dirs = "^1.0"
 stoken = { version = "^0", optional = true }
 keyring = { version = "^0", optional = true }
 clipboard = { version = "^0", optional = true }
+
+[dev-dependencies.cargo-husky]
+version = "1.5.0"
+default-features = false # Disable features which are enabled by default
+features = ["precommit-hook", "prepush-hook", "run-cargo-fmt", "run-cargo-test", "run-cargo-clippy"]
 
 [profile.release]
 lto = true

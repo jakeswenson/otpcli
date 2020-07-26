@@ -1,5 +1,4 @@
-use serde::{self, Deserialize, Serialize};
-
+//! OTP — a one time password code generator library
 use config::Config;
 
 pub mod config;
@@ -11,6 +10,7 @@ use crate::config::TotpOptions;
 #[cfg(feature = "rsa_stoken")]
 use stoken::{self, chrono::Utc};
 
+use crate::totp::TokenAlgorithm;
 use std::iter::FromIterator;
 use std::path::Path;
 use std::{
@@ -48,17 +48,6 @@ impl Display for TotpConfigError {
 impl Error for TotpConfigError {}
 
 pub type TotpResult<T> = Result<T, Box<dyn Error>>;
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum TokenAlgorithm {
-    #[serde(rename = "sha1")]
-    TotpSha1,
-    #[cfg(feature = "rsa_stoken")]
-    #[serde(rename = "stoken")]
-    SToken,
-}
-
-impl Copy for TokenAlgorithm {}
 
 #[cfg(feature = "rsa_stoken")]
 fn stoken(name: &str, options: &TotpOptions) -> TotpResult<String> {
@@ -120,7 +109,7 @@ pub fn add_secret<P: AsRef<Path>>(
 ) -> TotpResult<Config> {
     let totp_options = secrets::store_secret(&name, &secret, algorithm)?;
     let mut config: Config = config.clone();
-    config.totp.insert(name.to_string(), totp_options);
+    config.insert(name.to_string(), totp_options);
     let string = toml::to_string(&config)?;
 
     config::ensure_config_dir(&config_dir)?;
@@ -130,7 +119,7 @@ pub fn add_secret<P: AsRef<Path>>(
 }
 
 pub fn list_secrets(config: Config, _prefix: Option<String>) -> TotpResult<Vec<String>> {
-    Ok(Vec::from_iter(config.totp.keys().cloned()))
+    Ok(Vec::from_iter(config.codes().keys().cloned()))
 }
 
 pub fn delete_secret<P: AsRef<Path>>(
@@ -138,7 +127,7 @@ pub fn delete_secret<P: AsRef<Path>>(
     config_dir: P,
     name: String,
 ) -> TotpResult<()> {
-    config.totp.remove(&name);
+    config.remove(&name);
     let string = toml::to_string(&config).expect("unable to write config to TOML");
     config::ensure_config_dir(&config_dir)?;
     std::fs::write(config_dir.as_ref().join("config.toml"), string)?;
@@ -147,14 +136,15 @@ pub fn delete_secret<P: AsRef<Path>>(
 
 #[cfg(feature = "keychain")]
 pub fn migrate_secrets_to_keychain<P: AsRef<Path>>(
-    mut config: Config,
+    config: Config,
     config_dir: P,
-) -> TotpResult<()> {
-    for (name, value) in config.clone().totp.iter() {
+) -> TotpResult<Config> {
+    let mut new_codes = config.clone();
+    for (name, value) in config.codes().iter() {
         println!("Migrating {}", name);
         let secret = secrets::get_secret(name, value)?;
-        config = add_secret(
-            &config,
+        new_codes = add_secret(
+            &new_codes,
             config_dir.as_ref(),
             name,
             secret,
@@ -162,5 +152,5 @@ pub fn migrate_secrets_to_keychain<P: AsRef<Path>>(
         )?;
     }
 
-    Ok(())
+    Ok(new_codes)
 }
