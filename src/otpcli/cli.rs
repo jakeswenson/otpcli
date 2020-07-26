@@ -72,7 +72,7 @@ pub enum Command {
 impl Options {
     pub fn command(&self) -> TotpResult<Command> {
         if self.name.is_none() && self.cmd.is_none() {
-            println!("Missing Command or TOTP token name");
+            println!("Missing either a Command or TOTP token name to generate");
             Options::clap().print_help()?;
             return Err(Box::new(TotpError::of(
                 "No command or TOTP token name provided",
