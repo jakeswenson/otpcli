@@ -1,6 +1,6 @@
 [package]
 name = "otpcli"
-version = "1.0.0"
+version = "1.0.1-alpha.0"
 authors = ["Jake Swenson <jake@jakeswenson.com>"]
 description = "A simple one-time-password CLI, with support for TOTP and STOKEN."
 license = "MIT"
