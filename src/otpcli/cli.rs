@@ -27,6 +27,13 @@ pub struct Options {
     pub copy_to_clipboard: bool,
 }
 
+impl Options {
+    #[cfg(feature = "copy")]
+    pub fn copy_to_clipboard(&self) -> bool {
+        self.copy_to_clipboard
+    }
+}
+
 #[derive(StructOpt, Clone)]
 pub enum Command {
     /// Add/Update a new TOTP secret

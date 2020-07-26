@@ -13,8 +13,9 @@ cargo install otpcli
 ```
 
 ## Features
-- **[DEFAULT]** `copy`: build with copy to [clipboard](https://crates.io/crates/clipboard) support. Adds a `--copy` option 
-- **[DEFAULT]** `keychain`: build with secure secret storage support using [`keyring`](https://crates.io/crates/keyring)
+- **[DEFAULT]** `copy`: build with copy to [clipboard](https://crates.io/crates/clipboard) support. Adds a `--copy` cli option.
+- **[DEFAULT]** `keychain`: build with secure secret storage support using [`keyring`](https://crates.io/crates/keyring).
+- `rsa_stoken`: add in `stoken` support using the stoken crate.
 
 The `copy` feature uses [clipboard](https://crates.io/crates/clipboard) 
 and that requires a X11 on linux to access the clipboard
@@ -42,7 +43,7 @@ SUBCOMMANDS:
     delete                 Add/Update a new TOTP secret
     generate               Generate a token
     help                   Prints this message or the help of the given subcommand(s)
-    import                 Import an RSAToken into otpcli
+    import                 Import an RSAToken into otpcli (if built with the stoken flag)
     list                   Add/Update a new TOTP secret
     migrate-to-keychain    Migrate secrets stored in the config to be stored in the keychain
 ```

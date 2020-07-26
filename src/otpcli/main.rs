@@ -57,11 +57,6 @@ fn copy_to_clipboard(code: &str) -> TotpResult<()> {
     Ok(())
 }
 
-#[cfg(not(feature = "copy"))]
-fn copy_to_clipboard(_code: &str) -> TotpResult<()> {
-    Ok(())
-}
-
 fn generate_token(opts: Options, config: Config, name: String) -> TotpResult<()> {
     let code = match otp::token(&name, config) {
         Ok(token) => token,
@@ -76,10 +71,9 @@ fn generate_token(opts: Options, config: Config, name: String) -> TotpResult<()>
         }
     };
 
-    if cfg!(feature = "copy") {
-        if opts.copy_to_clipboard {
-            copy_to_clipboard(&code)?;
-        }
+    #[cfg(feature = "copy")]
+    if opts.copy_to_clipboard() {
+        copy_to_clipboard(&code)?;
     }
 
     if opts.end_with_newline {

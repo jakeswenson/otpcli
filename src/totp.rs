@@ -30,11 +30,11 @@ pub enum TokenAlgorithm {
 impl Copy for TokenAlgorithm {}
 
 trait AsDigest {
-    fn new(&self) -> Box<dyn Digest>;
+    fn as_digest(&self) -> Box<dyn Digest>;
 }
 
 impl AsDigest for TokenAlgorithm {
-    fn new(&self) -> Box<dyn Digest> {
+    fn as_digest(&self) -> Box<dyn Digest> {
         Box::new(match self {
             TokenAlgorithm::TotpSha1 => Sha1::new(),
             #[cfg(feature = "rsa_stoken")]
