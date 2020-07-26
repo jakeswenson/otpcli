@@ -46,3 +46,7 @@ features = ["precommit-hook", "prepush-hook", "run-cargo-fmt", "run-cargo-test",
 lto = true
 opt-level = 'z'  # Optimize for size.
 codegen-units = 1
+
+[package.metadata.docs.rs]
+no-default-features = true # copy support doesn't work
+features = ["keychain"]
